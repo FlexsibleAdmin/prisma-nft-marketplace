@@ -15,6 +15,7 @@ import { HomePage } from '@/pages/HomePage';
 import { ExplorePage } from '@/pages/ExplorePage';
 import { NFTDetailPage } from '@/pages/NFTDetailPage';
 import { UserProfilePage } from '@/pages/UserProfilePage';
+import { CreateNFTPage } from '@/pages/CreateNFTPage';
 const router = createBrowserRouter([
   {
     path: "/",
@@ -28,6 +29,10 @@ const router = createBrowserRouter([
       {
         path: "explore",
         element: <ExplorePage />,
+      },
+      {
+        path: "create",
+        element: <CreateNFTPage />,
       },
       {
         path: "assets/:id",

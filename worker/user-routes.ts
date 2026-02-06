@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type { Env } from './core-utils';
 import { UserEntity, ChatBoardEntity, NFTEntity } from "./entities";
 import { ok, bad, notFound, isStr } from './core-utils';
+import type { NFT } from "@shared/types";
 export function userRoutes(app: Hono<{ Bindings: Env }>) {
   app.get('/api/test', (c) => c.json({ success: true, data: { name: 'CF Workers Demo' }}));
   // USERS
@@ -52,6 +53,40 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const lq = c.req.query('limit');
     const page = await NFTEntity.list(c.env, cq ?? null, lq ? Math.max(1, (Number(lq) | 0)) : undefined);
     return ok(c, page);
+  });
+  app.post('/api/nfts', async (c) => {
+    try {
+      const body = await c.req.json() as Partial<NFT>;
+      // Basic validation
+      if (!body.title?.trim() || !body.image?.trim() || !body.collection?.trim() || body.price === undefined) {
+        return bad(c, 'Missing required fields: title, image, collection, price');
+      }
+      const newId = crypto.randomUUID();
+      const newNFT: NFT = {
+        id: newId,
+        title: body.title.trim(),
+        description: body.description?.trim() || '',
+        image: body.image.trim(),
+        price: Number(body.price),
+        collection: body.collection.trim(),
+        artist: body.artist || 'Anonymous', // Should be set by client based on auth
+        owner: body.owner || body.artist || 'Anonymous',
+        likes: 0,
+        avatar: body.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=60",
+        attributes: body.attributes || [
+          { trait_type: "Origin", value: "Minted on Prisma" },
+          { trait_type: "Edition", value: "1 of 1" }
+        ],
+        priceHistory: [
+          { date: new Date().toLocaleString('default', { month: 'short' }), price: Number(body.price) }
+        ]
+      };
+      const created = await NFTEntity.create(c.env, newNFT);
+      return ok(c, created);
+    } catch (e) {
+      console.error('Failed to create NFT:', e);
+      return bad(c, 'Invalid request body');
+    }
   });
   app.get('/api/nfts/:id', async (c) => {
     const nft = new NFTEntity(c.env, c.req.param('id'));

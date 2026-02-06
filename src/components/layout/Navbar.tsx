@@ -1,16 +1,24 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Search, Menu, X, Wallet, User } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Search, Menu, Wallet, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuthStore } from "@/lib/store";
+import { MOCK_USER_PROFILE } from "@shared/mock-data";
+import { toast } from "sonner";
 export function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  // Global Auth State
+  const user = useAuthStore((state) => state.user);
+  const login = useAuthStore((state) => state.login);
+  const logout = useAuthStore((state) => state.logout);
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Explore", path: "/explore" },
@@ -19,7 +27,19 @@ export function Navbar() {
   ];
   const isActive = (path: string) => location.pathname === path;
   const handleConnect = () => {
-    setIsConnected(!isConnected);
+    if (user) {
+      logout();
+      toast.info("Wallet disconnected");
+    } else {
+      login(MOCK_USER_PROFILE);
+      toast.success("Wallet connected successfully");
+    }
+  };
+  const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchTerm.trim()) {
+      navigate(`/explore?search=${encodeURIComponent(searchTerm.trim())}`);
+      setIsMobileMenuOpen(false);
+    }
   };
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
@@ -57,22 +77,38 @@ export function Navbar() {
             <Input
               placeholder="Search items, collections, and accounts"
               className="pl-9 bg-secondary/50 border-transparent focus-visible:bg-background focus-visible:border-input transition-all"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={handleSearch}
             />
           </div>
           {/* Actions */}
           <div className="flex items-center gap-2 md:gap-4">
             <ThemeToggle className="relative top-0 right-0" />
-            {isConnected ? (
-              <Link to="/profile">
-                <Avatar className="h-8 w-8 border border-border hover:ring-2 hover:ring-primary transition-all cursor-pointer">
-                  <AvatarImage src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=60" />
-                  <AvatarFallback>CA</AvatarFallback>
-                </Avatar>
-              </Link>
+            {user ? (
+              <div className="flex items-center gap-3">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="hidden md:flex gap-2 border-primary/20 hover:bg-primary/5"
+                  asChild
+                >
+                  <Link to="/create">
+                    <Plus className="h-4 w-4" />
+                    Create
+                  </Link>
+                </Button>
+                <Link to="/profile">
+                  <Avatar className="h-8 w-8 border border-border hover:ring-2 hover:ring-primary transition-all cursor-pointer">
+                    <AvatarImage src={user.avatar} />
+                    <AvatarFallback>{user.name[0]}</AvatarFallback>
+                  </Avatar>
+                </Link>
+              </div>
             ) : (
-              <Button 
-                variant="default" 
-                size="sm" 
+              <Button
+                variant="default"
+                size="sm"
                 onClick={handleConnect}
                 className="hidden md:flex gap-2 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 border-0"
               >
@@ -100,6 +136,9 @@ export function Navbar() {
                     <Input
                       placeholder="Search..."
                       className="pl-9"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onKeyDown={handleSearch}
                     />
                   </div>
                   <nav className="flex flex-col gap-4">
@@ -116,19 +155,33 @@ export function Navbar() {
                         {link.name}
                       </Link>
                     ))}
-                    <Link
-                      to="/profile"
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={cn(
-                        "text-lg font-medium transition-colors hover:text-primary",
-                        isActive("/profile") ? "text-primary" : "text-muted-foreground"
-                      )}
-                    >
-                      Profile
-                    </Link>
+                    {user && (
+                      <>
+                        <Link
+                          to="/create"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className={cn(
+                            "text-lg font-medium transition-colors hover:text-primary",
+                            isActive("/create") ? "text-primary" : "text-muted-foreground"
+                          )}
+                        >
+                          Create NFT
+                        </Link>
+                        <Link
+                          to="/profile"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                          className={cn(
+                            "text-lg font-medium transition-colors hover:text-primary",
+                            isActive("/profile") ? "text-primary" : "text-muted-foreground"
+                          )}
+                        >
+                          Profile
+                        </Link>
+                      </>
+                    )}
                   </nav>
                   <div className="mt-auto">
-                    <Button 
+                    <Button
                       onClick={() => {
                         handleConnect();
                         setIsMobileMenuOpen(false);
@@ -136,7 +189,7 @@ export function Navbar() {
                       className="w-full gap-2 bg-gradient-to-r from-blue-600 to-violet-600"
                     >
                       <Wallet className="h-4 w-4" />
-                      {isConnected ? 'Disconnect Wallet' : 'Connect Wallet'}
+                      {user ? 'Disconnect Wallet' : 'Connect Wallet'}
                     </Button>
                   </div>
                 </div>

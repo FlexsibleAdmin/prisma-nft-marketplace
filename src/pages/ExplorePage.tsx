@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { Filter, SlidersHorizontal, Loader2 } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+import { Filter, SlidersHorizontal, Loader2, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -12,6 +12,8 @@ import { api } from "@/lib/api-client";
 import type { NFT } from "@shared/types";
 import { toast } from "sonner";
 export function ExplorePage() {
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search") || "";
   const [nfts, setNfts] = useState<NFT[]>([]);
   const [loading, setLoading] = useState(true);
   const [priceRange, setPriceRange] = useState([0, 10]);
@@ -30,6 +32,18 @@ export function ExplorePage() {
     };
     fetchNFTs();
   }, []);
+  // Filter NFTs based on search query and price range
+  const filteredNFTs = useMemo(() => {
+    return nfts.filter(nft => {
+      const matchesSearch = searchQuery 
+        ? (nft.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+           nft.collection.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           nft.artist.toLowerCase().includes(searchQuery.toLowerCase()))
+        : true;
+      const matchesPrice = nft.price >= priceRange[0] && nft.price <= priceRange[1];
+      return matchesSearch && matchesPrice;
+    });
+  }, [nfts, searchQuery, priceRange]);
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col gap-8">
@@ -37,7 +51,13 @@ export function ExplorePage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-display font-bold">Explore Marketplace</h1>
-            <p className="text-muted-foreground mt-1">Browse more than 50k NFTs from top creators</p>
+            {searchQuery ? (
+              <p className="text-muted-foreground mt-1">
+                Showing results for "<span className="text-foreground font-medium">{searchQuery}</span>"
+              </p>
+            ) : (
+              <p className="text-muted-foreground mt-1">Browse more than 50k NFTs from top creators</p>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <Sheet>
@@ -134,22 +154,41 @@ export function ExplorePage() {
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {nfts.map((nft) => (
-                    <NFTCard key={nft.id} nft={nft} />
-                  ))}
-                  {/* Duplicate for demo volume if needed, but using real data now */}
-                </div>
-                {nfts.length === 0 && (
-                  <div className="text-center py-12 text-muted-foreground">
-                    No items found.
+                {filteredNFTs.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredNFTs.map((nft) => (
+                      <NFTCard key={nft.id} nft={nft} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-24 text-center space-y-4">
+                    <div className="h-16 w-16 rounded-full bg-secondary/50 flex items-center justify-center">
+                      <SearchX className="h-8 w-8 text-muted-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">No items found</h3>
+                      <p className="text-muted-foreground">
+                        Try adjusting your search or filters to find what you're looking for.
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => {
+                        setPriceRange([0, 20]);
+                        // Clear search param logic would go here if we had a clear button
+                      }}
+                    >
+                      Clear Filters
+                    </Button>
                   </div>
                 )}
-                <div className="mt-12 flex justify-center">
-                  <Button variant="outline" size="lg" className="min-w-[200px]">
-                    Load More
-                  </Button>
-                </div>
+                {filteredNFTs.length > 0 && (
+                  <div className="mt-12 flex justify-center">
+                    <Button variant="outline" size="lg" className="min-w-[200px]">
+                      Load More
+                    </Button>
+                  </div>
+                )}
               </>
             )}
           </div>
