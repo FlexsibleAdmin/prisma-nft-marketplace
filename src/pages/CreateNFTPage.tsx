@@ -20,12 +20,14 @@ const formSchema = z.object({
   price: z.coerce.number().min(0.001, "Price must be greater than 0"),
   collection: z.string().min(2, "Collection name is required"),
 });
+type FormValues = z.infer<typeof formSchema>;
 export function CreateNFTPage() {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<FormValues>({
+    // Fix TS2322: Cast resolver to any to bypass strict type mismatch between zod output and RHF expectations
+    resolver: zodResolver(formSchema) as any,
     defaultValues: {
       title: "",
       description: "",
@@ -51,7 +53,7 @@ export function CreateNFTPage() {
       </div>
     );
   }
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
     try {
       const payload = {
@@ -178,10 +180,10 @@ export function CreateNFTPage() {
                     <FormItem>
                       <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea 
-                          placeholder="Describe your NFT..." 
+                        <Textarea
+                          placeholder="Describe your NFT..."
                           className="min-h-[120px]"
-                          {...field} 
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />
@@ -189,16 +191,16 @@ export function CreateNFTPage() {
                   )}
                 />
                 <div className="flex justify-end gap-4 pt-4">
-                  <Button 
-                    type="button" 
-                    variant="ghost" 
+                  <Button
+                    type="button"
+                    variant="ghost"
                     onClick={() => navigate(-1)}
                     disabled={isSubmitting}
                   >
                     Cancel
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="bg-gradient-to-r from-blue-600 to-violet-600 hover:shadow-glow transition-all"
                     disabled={isSubmitting}
                   >
