@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 export function Navbar() {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Explore", path: "/explore" },
@@ -16,6 +18,9 @@ export function Navbar() {
     { name: "Community", path: "/community" },
   ];
   const isActive = (path: string) => location.pathname === path;
+  const handleConnect = () => {
+    setIsConnected(!isConnected);
+  };
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -49,18 +54,32 @@ export function Navbar() {
           {/* Search Bar */}
           <div className="hidden md:flex flex-1 max-w-sm items-center relative">
             <Search className="absolute left-3 h-4 w-4 text-muted-foreground" />
-            <Input 
-              placeholder="Search items, collections, and accounts" 
+            <Input
+              placeholder="Search items, collections, and accounts"
               className="pl-9 bg-secondary/50 border-transparent focus-visible:bg-background focus-visible:border-input transition-all"
             />
           </div>
           {/* Actions */}
           <div className="flex items-center gap-2 md:gap-4">
             <ThemeToggle className="relative top-0 right-0" />
-            <Button variant="default" size="sm" className="hidden md:flex gap-2 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 border-0">
-              <Wallet className="h-4 w-4" />
-              <span>Connect</span>
-            </Button>
+            {isConnected ? (
+              <Link to="/profile">
+                <Avatar className="h-8 w-8 border border-border hover:ring-2 hover:ring-primary transition-all cursor-pointer">
+                  <AvatarImage src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&auto=format&fit=crop&q=60" />
+                  <AvatarFallback>CA</AvatarFallback>
+                </Avatar>
+              </Link>
+            ) : (
+              <Button 
+                variant="default" 
+                size="sm" 
+                onClick={handleConnect}
+                className="hidden md:flex gap-2 bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-700 hover:to-violet-700 border-0"
+              >
+                <Wallet className="h-4 w-4" />
+                <span>Connect</span>
+              </Button>
+            )}
             {/* Mobile Menu */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
@@ -78,8 +97,8 @@ export function Navbar() {
                   </div>
                   <div className="relative">
                     <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      placeholder="Search..." 
+                    <Input
+                      placeholder="Search..."
                       className="pl-9"
                     />
                   </div>
@@ -97,11 +116,27 @@ export function Navbar() {
                         {link.name}
                       </Link>
                     ))}
+                    <Link
+                      to="/profile"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={cn(
+                        "text-lg font-medium transition-colors hover:text-primary",
+                        isActive("/profile") ? "text-primary" : "text-muted-foreground"
+                      )}
+                    >
+                      Profile
+                    </Link>
                   </nav>
                   <div className="mt-auto">
-                    <Button className="w-full gap-2 bg-gradient-to-r from-blue-600 to-violet-600">
+                    <Button 
+                      onClick={() => {
+                        handleConnect();
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className="w-full gap-2 bg-gradient-to-r from-blue-600 to-violet-600"
+                    >
                       <Wallet className="h-4 w-4" />
-                      Connect Wallet
+                      {isConnected ? 'Disconnect Wallet' : 'Connect Wallet'}
                     </Button>
                   </div>
                 </div>

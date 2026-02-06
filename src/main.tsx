@@ -13,6 +13,8 @@ import '@/index.css'
 import { App } from '@/App';
 import { HomePage } from '@/pages/HomePage';
 import { ExplorePage } from '@/pages/ExplorePage';
+import { NFTDetailPage } from '@/pages/NFTDetailPage';
+import { UserProfilePage } from '@/pages/UserProfilePage';
 const router = createBrowserRouter([
   {
     path: "/",
@@ -26,6 +28,14 @@ const router = createBrowserRouter([
       {
         path: "explore",
         element: <ExplorePage />,
+      },
+      {
+        path: "assets/:id",
+        element: <NFTDetailPage />,
+      },
+      {
+        path: "profile",
+        element: <UserProfilePage />,
       }
     ]
   },
