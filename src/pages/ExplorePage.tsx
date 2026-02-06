@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Filter, SlidersHorizontal } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Filter, SlidersHorizontal, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
@@ -8,10 +8,28 @@ import { Label } from "@/components/ui/label";
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { NFTCard } from "@/components/ui/nft-card";
-import { MOCK_NFTS } from "@/lib/mock-nft-data";
+import { api } from "@/lib/api-client";
+import type { NFT } from "@shared/types";
+import { toast } from "sonner";
 export function ExplorePage() {
+  const [nfts, setNfts] = useState<NFT[]>([]);
+  const [loading, setLoading] = useState(true);
   const [priceRange, setPriceRange] = useState([0, 10]);
   const categories = ["Art", "Collectibles", "Music", "Photography", "Sports", "Virtual Worlds"];
+  useEffect(() => {
+    const fetchNFTs = async () => {
+      try {
+        const response = await api<{ items: NFT[], next: string | null }>('/api/nfts');
+        setNfts(response.items);
+      } catch (error) {
+        console.error("Failed to fetch NFTs", error);
+        toast.error("Failed to load marketplace items");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNFTs();
+  }, []);
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col gap-8">
@@ -33,13 +51,13 @@ export function ExplorePage() {
                   <SheetTitle>Filters</SheetTitle>
                 </SheetHeader>
                 <div className="py-6 space-y-6">
-                  {/* Mobile Filters Content - duplicated for simplicity */}
+                  {/* Mobile Filters Content */}
                   <div className="space-y-4">
                     <h3 className="font-semibold">Price Range (ETH)</h3>
-                    <Slider 
-                      defaultValue={[0, 10]} 
-                      max={20} 
-                      step={0.1} 
+                    <Slider
+                      defaultValue={[0, 10]}
+                      max={20}
+                      step={0.1}
                       value={priceRange}
                       onValueChange={setPriceRange}
                       className="py-4"
@@ -79,10 +97,10 @@ export function ExplorePage() {
           <aside className="hidden md:block w-64 shrink-0 space-y-8 sticky top-24">
             <div className="space-y-4">
               <h3 className="font-semibold text-lg">Price Range</h3>
-              <Slider 
-                defaultValue={[0, 10]} 
-                max={20} 
-                step={0.1} 
+              <Slider
+                defaultValue={[0, 10]}
+                max={20}
+                step={0.1}
                 value={priceRange}
                 onValueChange={setPriceRange}
                 className="py-4"
@@ -110,20 +128,30 @@ export function ExplorePage() {
           </aside>
           {/* Grid */}
           <div className="flex-1">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {MOCK_NFTS.map((nft) => (
-                <NFTCard key={nft.id} nft={nft} />
-              ))}
-              {/* Duplicate for demo volume */}
-              {MOCK_NFTS.map((nft) => (
-                <NFTCard key={`${nft.id}-dup`} nft={{...nft, id: `${nft.id}-dup`}} />
-              ))}
-            </div>
-            <div className="mt-12 flex justify-center">
-              <Button variant="outline" size="lg" className="min-w-[200px]">
-                Load More
-              </Button>
-            </div>
+            {loading ? (
+              <div className="flex justify-center py-24">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {nfts.map((nft) => (
+                    <NFTCard key={nft.id} nft={nft} />
+                  ))}
+                  {/* Duplicate for demo volume if needed, but using real data now */}
+                </div>
+                {nfts.length === 0 && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No items found.
+                  </div>
+                )}
+                <div className="mt-12 flex justify-center">
+                  <Button variant="outline" size="lg" className="min-w-[200px]">
+                    Load More
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

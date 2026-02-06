@@ -4,7 +4,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import type { NFT } from "@/lib/mock-nft-data";
+import type { NFT } from "@shared/types";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 interface NFTCardProps {

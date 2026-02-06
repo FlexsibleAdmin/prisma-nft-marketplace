@@ -1,11 +1,29 @@
-import { ArrowRight, Zap, Shield, Globe } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowRight, Zap, Shield, Globe, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NFTCard } from "@/components/ui/nft-card";
-import { MOCK_NFTS } from "@/lib/mock-nft-data";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { api } from "@/lib/api-client";
+import type { NFT } from "@shared/types";
+import { toast } from "sonner";
 export function HomePage() {
-  const featuredNFTs = MOCK_NFTS.slice(0, 4);
+  const [featuredNFTs, setFeaturedNFTs] = useState<NFT[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const fetchTrending = async () => {
+      try {
+        const response = await api<{ items: NFT[], next: string | null }>('/api/nfts?limit=4');
+        setFeaturedNFTs(response.items);
+      } catch (error) {
+        console.error("Failed to fetch trending NFTs", error);
+        toast.error("Failed to load trending items");
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTrending();
+  }, []);
   return (
     <div className="flex flex-col gap-16 pb-16">
       {/* Hero Section */}
@@ -22,7 +40,7 @@ export function HomePage() {
                 The Next Gen NFT Marketplace
               </span>
             </motion.div>
-            <motion.h1 
+            <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -30,7 +48,7 @@ export function HomePage() {
             >
               Discover, Collect, and Sell <span className="text-gradient">Extraordinary</span> NFTs
             </motion.h1>
-            <motion.p 
+            <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -38,7 +56,7 @@ export function HomePage() {
             >
               Prisma is the world's first ultra-low latency marketplace built on the Edge. Experience instant transactions and zero-gas minting.
             </motion.p>
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -68,19 +86,25 @@ export function HomePage() {
             </Link>
           </Button>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {featuredNFTs.map((nft, index) => (
-            <motion.div
-              key={nft.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: index * 0.1 }}
-            >
-              <NFTCard nft={nft} />
-            </motion.div>
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {featuredNFTs.map((nft, index) => (
+              <motion.div
+                key={nft.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: index * 0.1 }}
+              >
+                <NFTCard nft={nft} />
+              </motion.div>
+            ))}
+          </div>
+        )}
       </section>
       {/* Features Grid */}
       <section className="bg-secondary/30 py-24">
