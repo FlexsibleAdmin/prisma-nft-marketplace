@@ -1,0 +1,21 @@
+{
+  "name": "Prisma NFT Marketplace",
+  "short_name": "Prisma",
+  "description": "A high-performance NFT marketplace built on the Edge.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
+  "icons": [
+    {
+      "src": "https://placehold.co/192x192/0F172A/FFF?text=P",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://placehold.co/512x512/0F172A/FFF?text=P",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
